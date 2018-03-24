@@ -1,64 +1,68 @@
+var fishArr = [];
+var allFish = [];
 
-var fishes = [];
-var creatures = [];
-
-var fish;
-var index = 0;
-var fishX = 0;
-var fishY = 300;
-var fishSpeed = 2;
-var img;
-var fishSize = Math.random() * 200;
-
-function preload() {
-  img = loadImage("fishLine.png");
+function preload () {
+  // load png image with fishes
+  img = loadImage('fishLine.png');
 }
 
-function setup() {
+function setup () {
   createCanvas(600, 400);
   img.loadPixels();
-  for(var i = 0; i < 21*206; i+=206) {
+  
+  // cut the png images into individual fish and 
+  // push each image to the allFish array
+  for (var i = 0; i < 21 * 206; i += 206) {
     var oneFish = img.get(i, 2, 203, 202);
-    fishes.push(oneFish);
+    fishArr.push(oneFish);
   }
-  creatures.push(new Fish(0, 200));
+  allFish.push(new Fish(200, 200, 1, 50));
+ 
 }
 
-function mousePressed() {
-  creatures.push(new Fish(mouseX, mouseY));
-}
-
-var Fish = function(x, y) {
-  this.index = 0;
+var Fish = function (x, y,speed,fSize) {
+  this.index = 0,
   this.x = x,
   this.y = y,
-  this.speed = 2;
-  this.fSize = random(50, 150),
-  this.images = fishes;
+  this.speed = speed,
+  this.fSize = fSize,
+  this.images = fishArr,
+  this.angle = 0
+
 
   this.update = function() {
-    this.x =+ random(-5, 5);
-    this.y =+ random(-5, 5);
+    // loop over each of the items in the array
+    this.index < 20 ? this.index++ : (this.index = 0);
   }
 
-  this.show = function() {
-    image(fishes[index], 0+fishX, fishY,fishSize,fishSize);
+  this.followMouse = function() {
+    if (dist(mouseX,mouseY,this.x,this.y) > 10) {
+        this.angle = atan2(mouseY - this.y, mouseX - this.x);
+        this.x += cos(this.angle) * this.speed;
+        this.y += sin(this.angle) * this.speed;
+    }
+  };
+};
+
+// add a new fish with the click of the mouse
+function mouseClicked() {
+  allFish.push(new Fish(mouseX, mouseY,random(2),random(5,80)));
+};
+
+function draw () {
+  for(var i = 0; i < height; i++){
+    stroke(10,30,220-i/2);
+    line(0,i, width,i);
   }
-}
-
-
-function draw() {
-  background(0,100,200);
-  // console.log('creatures ', creatures[0].images);
-  creatures.forEach(c => image(c.images[index],100+index,100));
-
-  // image(fishes[index], 0+fishX, fishY,fishSize,fishSize);
-  
-  index < 20 ? index++ :index=0;
-  // if(fishX > 600) {
-  //   fishX = random(-200);
-  //   fishY = random(300);
-  // } else {
-  //   fishX += fishSpeed;
-  // }
-}
+  // background(0, 150, 200);
+  allFish.forEach(fish => {
+      var direction = fish.x < mouseX ? 1 : -1;
+      push();
+      scale(direction*1.0, 1.0);
+      image(fish.images[fish.index], direction * fish.x, fish.y, fish.fSize, fish.fSize);
+      pop();
+      fish.update();
+      fish.followMouse();
+    }
+  );
+};
